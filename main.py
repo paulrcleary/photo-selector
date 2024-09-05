@@ -2,7 +2,6 @@ from tkinter import *
 import customtkinter
 from PIL import Image
 
-
 customtkinter.set_appearance_mode("system")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
