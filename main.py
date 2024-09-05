@@ -1,6 +1,5 @@
-from tkinter import filedialog, scrolledtext, END, WORD, Text, Scrollbar
-from tkinter import *
 import customtkinter, os
+from tkinter import filedialog, scrolledtext, END, WORD, Text, Scrollbar
 from os import listdir
 from os.path import isfile, join
 from PIL import Image
@@ -16,7 +15,7 @@ current_image = customtkinter.CTkImage(light_image=Image.open("../../desktop/mis
 
 app = customtkinter.CTk()    
 app.title('Photo Picker')
-app.geometry('650x550')
+app.geometry('650x650')
 app.grid_columnconfigure((0, 1, 2), weight=1)
 
 
@@ -50,7 +49,7 @@ def next_button_callback(event=None):
     if files == '':
         log_message("Please select a directory first.")
     else:
-        current_index = min(len(files) - 1, current_index + 1) # Ensure it doesn't go beyond the list
+        current_index = (current_index + 1) % len(files) # Ensure it doesn't go beyond the list
         check_var.set("off")  # Reset checkbox when changing image
         update_displayed_image()
 
@@ -104,6 +103,9 @@ def toggle_checkbox(event=None):
         selected_images.pop(current_image_path, None)
         log_message(f"Deselected {files[current_index]}")
 
+def done_button():
+    pass
+
 
 # Keyboard shortcuts
 app.bind("<Left>", prev_button_callback)
@@ -135,7 +137,7 @@ checkbox.grid(row=3, column=2, padx=20, pady=20)
 
 # Create a ScrolledText widget for the log window
 log_window = scrolledtext.ScrolledText(app, wrap=WORD, height=5) 
-log_window.grid(row=5, column=1, columnspan=3, padx=20, pady=20, sticky="nsew")
+log_window.grid(row=4, column=1, columnspan=3, padx=20, pady=20, sticky="nsew")
 
 scrollbar = log_window.vbar 
 scrollbar.config(width=0)  # Correct option: state (without hyphen)
@@ -152,6 +154,9 @@ log_scrollbar = Scrollbar(app, command=log_text.yview,
                          troughcolor="white")       # Trough color
 
 log_text.config(yscrollcommand=log_scrollbar.set)
+
+done_button = customtkinter.CTkButton(app, text="Done!", command=done_button)
+done_button.grid(row=5, column=3, padx=20, pady=20)
 
 
 log_message("Application started")
