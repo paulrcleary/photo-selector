@@ -27,7 +27,7 @@ def select_directory():
     os.chdir(app.current_dir)
     files = [f for f in listdir(app.current_dir) if isfile(join(app.current_dir, f))]
     files.sort()
-    print(f"Setting active directory to {current_dir}")
+    log_message(f"Setting active directory to {current_dir}")
     # print(current_dir, files, f'{current_dir}/{files[0]}')
 
     current_index = max(0, current_index - 1) # Ensure it doesn't go below 0
@@ -39,7 +39,7 @@ def select_directory():
 def prev_button_callback(event=None):
     global current_index # Update global index
     if files == '':
-        print("Please select a directory first.")
+        log_message("Please select a directory first.")
     else:
         current_index = max(0, current_index - 1) # Ensure it doesn't go below 0
         check_var.set("off")  # Reset checkbox when changing image
@@ -48,7 +48,7 @@ def prev_button_callback(event=None):
 def next_button_callback(event=None):
     global current_index # Update global index
     if files == '':
-        print("Please select a directory first.")
+        log_message("Please select a directory first.")
     else:
         current_index = min(len(files) - 1, current_index + 1) # Ensure it doesn't go beyond the list
         check_var.set("off")  # Reset checkbox when changing image
@@ -70,18 +70,18 @@ def checkbox_event():
     global check_var  # Declare check_var as global to modify it
 
     if files == '':
-        print("Please select a directory first.")
+        log_message("Please select a directory first.")
         check_var.set("off")  # Use .set() to change the checkbox state
     else:
         # Add/remove the current image from selected_images based on checkbox state
         current_image_path = files[current_index]
         if check_var.get() == "on":
             selected_images[current_image_path] = True  # Add to dictionary
-            print(f"Selected {files[current_index]}")
+            log_message(f"Selected {files[current_index]}")
 
         else:
             selected_images.pop(current_image_path, None)  # Remove if present
-            print(f"Deselected {files[current_index]}")
+            log_message(f"Deselected {files[current_index]}")
 
 
     print(selected_images)
@@ -99,10 +99,10 @@ def toggle_checkbox(event=None):
     current_image_path = files[current_index] 
     if check_var.get() == "on":
         selected_images[current_image_path] = True
-        print(f"Selected {files[current_index]}")
+        log_message(f"Selected {files[current_index]}")
     else:
         selected_images.pop(current_image_path, None)
-        print(f"Deselected {files[current_index]}")
+        log_message(f"Deselected {files[current_index]}")
 
 
 # Keyboard shortcuts
@@ -133,5 +133,27 @@ check_var = customtkinter.StringVar(value="off")
 checkbox = customtkinter.CTkCheckBox(app, text="Selected", command=checkbox_event, variable=check_var, onvalue="on", offvalue="off")  # Use "on" and "off" as values
 checkbox.grid(row=3, column=2, padx=20, pady=20)
 
+# Create a ScrolledText widget for the log window
+log_window = scrolledtext.ScrolledText(app, wrap=WORD, height=5) 
+log_window.grid(row=5, column=1, columnspan=3, padx=20, pady=20, sticky="nsew")
+
+scrollbar = log_window.vbar 
+scrollbar.config(width=0)  # Correct option: state (without hyphen)
+
+# Function to add messages to the log window
+def log_message(message):
+    log_window.insert(END, message + "\n")
+    log_window.see(END)  # Scroll to the bottom to see the latest message
+
+log_text = Text(app, wrap=WORD, height=5)
+log_scrollbar = Scrollbar(app, command=log_text.yview,
+                         background="lightgray",  # Scrollbar trough color
+                         activebackground="gray",   # Active background color
+                         troughcolor="white")       # Trough color
+
+log_text.config(yscrollcommand=log_scrollbar.set)
+
+
+log_message("Application started")
 
 app.mainloop()
