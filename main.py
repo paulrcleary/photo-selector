@@ -1,5 +1,5 @@
 import customtkinter, os
-from tkinter import filedialog, scrolledtext, END, WORD, Text, Scrollbar
+from tkinter import filedialog, scrolledtext, END, WORD, Text, Scrollbar, messagebox, Toplevel
 from os import listdir
 from os.path import isfile, join
 from PIL import Image
@@ -7,7 +7,11 @@ from PIL import Image
 current_index = 0
 
 current_dir = os.curdir
+desired_extension = ''
 files = ''
+popup = None
+all_extensions = set() 
+
 
 selected_images={}
 
@@ -19,21 +23,74 @@ app.geometry('650x650')
 app.grid_columnconfigure((0, 1, 2), weight=1)
 
 
-def select_directory():
-    global current_dir, files, current_index # Update global variables
-    app.current_dir =  filedialog.askdirectory(initialdir = "/",title = "Select Directory")
-    current_dir = app.current_dir
-    os.chdir(app.current_dir)
-    files = [f for f in listdir(app.current_dir) if isfile(join(app.current_dir, f))]
+# ... (rest of your code)
+
+# Declare checkbox_vars as a global variable
+checkbox_vars = {}
+
+# Function to apply the selected extensions and close the popup
+def apply_and_close():
+    global files, popup  # Declare popup as global
+
+    if popup is None:  # Check if popup is valid
+        return  # Or handle the error in a more user-friendly way
+
+    selected_extensions = [ext for ext, var in checkbox_vars.items() if var.get() == "on"]
+    files = [
+        f
+        for f in listdir(app.current_dir)
+        if isfile(join(app.current_dir, f)) and
+        os.path.splitext(f)[1][1:].lower() in selected_extensions and
+        not f.startswith('.')
+    ]
     files.sort()
-    log_message(f"Setting active directory to {current_dir}")
-    # print(current_dir, files, f'{current_dir}/{files[0]}')
-
-    current_index = max(0, current_index - 1) # Ensure it doesn't go below 0
-
+    popup.destroy()
     update_displayed_image()
 
-    return current_dir, files
+def select_directory():
+    global current_dir, files, all_extensions, checkbox_vars, popup
+    app.current_dir = filedialog.askdirectory(initialdir="/", title="Select Directory")
+    current_dir = app.current_dir
+    os.chdir(app.current_dir)
+
+    # Get all file extensions in the directory, excluding empty extensions and handling case insensitivity
+    all_extensions = {
+        os.path.splitext(f)[1][1:].lower()
+        for f in listdir(app.current_dir)
+        if isfile(join(app.current_dir, f)) and os.path.splitext(f)[1]
+    }
+
+    if not all_extensions:
+        messagebox.showwarning("No Extensions Found", "The selected directory contains no files with recognizable extensions.")
+        return  # Or handle this case differently based on your requirements
+
+    # Create the popup window
+    global popup  # Declare popup as global within the function
+    popup = Toplevel(app)
+    popup.title("Select Extensions")
+
+    # Create checkboxes for each extension
+    checkbox_vars.clear()  # Clear the dictionary before populating it again
+    for ext in all_extensions:
+        var = customtkinter.StringVar(value="off") 
+        checkbox = customtkinter.CTkCheckBox(popup, text=ext, variable=var, onvalue="on", offvalue="off")
+        checkbox.pack(padx=20, pady=20)
+        checkbox_vars[ext] = var
+
+    # Create an Apply button
+    apply_button = customtkinter.CTkButton(popup, text="Apply", command=apply_and_close)  # Remove the lambda
+    apply_button.pack()
+    
+    print(current_dir)
+    print("All extensions in the directory:", all_extensions)
+    return current_dir
+
+def show_popup():
+    messagebox.showinfo("Popup Title", "This is the popup message!")
+
+    # Create a button to trigger the popup (or call show_popup from elsewhere)
+    popup_button = customtkinter.CTkButton(app, text="Show Popup", command=show_popup)
+    popup_button.grid(row=7, column=2, padx=20, pady=20)  # Adjust row as needed
 
 def prev_button_callback(event=None):
     global current_index # Update global index
@@ -103,8 +160,68 @@ def toggle_checkbox(event=None):
         selected_images.pop(current_image_path, None)
         log_message(f"Deselected {files[current_index]}")
 
-def done_button():
-    pass
+def load_selection():
+    row = 0
+    column = 0  # Start column at 0 for three columns
+
+    for image_path in selected_images:  # Iterate over keys (image paths)
+        try:
+            image1 = customtkinter.CTkLabel(app, text="", image=customtkinter.CTkImage(light_image=Image.open(f"{current_dir}/{image_path}"), size=(200, 200)))  # Adjust size as needed
+            image1.grid(row=row, column=column, padx=20, pady=20)
+
+            column += 1
+            if column == 3:  # Reset column to 0 after reaching 3
+                column = 0
+                row += 1
+        except Exception as e:
+            log_message(f"Error loading image {image_path}: {e}")
+
+    done2_button = customtkinter.CTkButton(app, text="Done!")
+    done2_button.grid(row=5, column=2, padx=20, pady=20)
+
+    
+
+def done1_button_callback():
+    # Clear all widgets except the Done button
+    for widget in app.winfo_children():
+        widget.destroy()    
+        load_selection()
+
+# def done2_button_callback():
+#     # Clear all widgets except the Done button
+#     for widget in app.winfo_children():
+#         widget.destroy()
+    
+#     global current_dir, files, all_extensions, checkbox_vars, popup
+
+#     # Get all file extensions in the directory, excluding empty extensions and handling case insensitivity
+#     all_extensions = {
+#         os.path.splitext(f)[1][1:].lower()
+#         for f in listdir(app.current_dir)
+#         if isfile(join(app.current_dir, f)) and os.path.splitext(f)[1]
+#     }
+
+#     if not all_extensions:
+#         messagebox.showwarning("No Extensions Found", "The selected directory contains no files with recognizable extensions.")
+#         return  # Or handle this case differently based on your requirements
+
+#     # Create the popup window
+#     global popup  # Declare popup as global within the function
+#     popup = Toplevel(app)
+#     popup.title("Select Extensions")
+
+#     # Create checkboxes for each extension
+#     checkbox_vars.clear()  # Clear the dictionary before populating it again
+#     for ext in all_extensions:
+#         var = customtkinter.StringVar(value="off") 
+#         checkbox = customtkinter.CTkCheckBox(popup, text=ext, variable=var, onvalue="on", offvalue="off")
+#         checkbox.pack(padx=20, pady=20)
+#         checkbox_vars[ext] = var
+
+#     # Create an Apply button
+#     apply_button = customtkinter.CTkButton(popup, text="Apply", command=apply_and_close)  # Remove the lambda
+#     apply_button.pack()
+
 
 
 # Keyboard shortcuts
@@ -155,8 +272,8 @@ log_scrollbar = Scrollbar(app, command=log_text.yview,
 
 log_text.config(yscrollcommand=log_scrollbar.set)
 
-done_button = customtkinter.CTkButton(app, text="Done!", command=done_button)
-done_button.grid(row=5, column=3, padx=20, pady=20)
+done1_button = customtkinter.CTkButton(app, text="Done!", command=done1_button_callback)
+done1_button.grid(row=5, column=3, padx=20, pady=20)
 
 
 log_message("Application started")
