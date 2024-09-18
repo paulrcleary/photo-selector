@@ -2,10 +2,6 @@ import customtkinter
 import tkinterweb
 import markdown2
 
-import customtkinter
-import tkinterweb
-import markdown2
-
 class InstructionsFrame(customtkinter.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
